@@ -35,15 +35,15 @@ class Solution:
             for i in range(9):
                 line[i] = list(map(str, range(1, 10))) if line[i] == '.' else line[i]
 
-    def is_hint(self, hint: list | str) -> bool:
+    def _is_hint(self, hint: list | str) -> bool:
         return isinstance(hint, list)
 
     def _remove_known_values_from_line(self, line: list[list | str]) -> None:
         for elem in line:
-            if not self.is_hint(elem):
+            if not self._is_hint(elem):
                 continue
 
-            known_values = [value for value in line if not self.is_hint(value)]
+            known_values = [value for value in line if not self._is_hint(value)]
 
             for value in known_values:
                 if value in elem:
@@ -52,7 +52,7 @@ class Solution:
     def _write_known_value_from_hints_in_line(self, line: list[list | str]) -> None:
         for i, elem in enumerate(line):
 
-            if not self.is_hint(elem):
+            if not self._is_hint(elem):
                 continue
 
             if len(elem) == 1:
@@ -60,17 +60,17 @@ class Solution:
 
     def _check_unique_value_in_hints_in_line(self, line: list[list | str]) -> None:
         for i, elem in enumerate(line):
-            if not self.is_hint(elem):
+            if not self._is_hint(elem):
                 continue
 
-            other_hints = [hint for hint in line if self.is_hint(hint) and hint is not elem]
+            other_hints = [hint for hint in line if self._is_hint(hint) and hint is not elem]
 
             for n in elem:
                 if all([(n not in other_hint) for other_hint in other_hints]):
                     line[i] = n
 
     def _remove_unique_pair_in_hints_in_line(self, line: list[list | str]):
-        pair_hints = [hint for hint in line if self.is_hint(hint) and len(hint) == 2]
+        pair_hints = [hint for hint in line if self._is_hint(hint) and len(hint) == 2]
 
         for pair in pair_hints:
             pair_counter = 0
@@ -80,7 +80,7 @@ class Solution:
 
             if pair_counter == 2:
                 for line_elem in line:
-                    if not self.is_hint(line_elem):
+                    if not self._is_hint(line_elem):
                         continue
 
                     if line_elem == pair:
