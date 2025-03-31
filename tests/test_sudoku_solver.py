@@ -1,5 +1,5 @@
 import pytest
-from main import Solution
+from solution import Solution
 
 solution = Solution()
 
@@ -59,6 +59,19 @@ test_lines = [
 def test_check_unique_value_in_hints_in_line(check_line, result_line):
     solution._remove_unique_pair_in_hints_in_line(check_line)
     assert check_line == result_line
+
+test_lines = [
+    ([['3', '5', '9'], ['3', '5'], ['7', '9'], ['7', '9'], '8', '6', '2', '4', '1'],
+     [['3', '5'], ['3', '5'], ['7', '9'], ['7', '9'], '8', '6', '2', '4', '1'])
+]
+
+@pytest.mark.parametrize('check_line, result_line', test_lines)
+def test_remove_except_unique_pair_values_in_hints_in_line(check_line, result_line):
+    solution._remove_except_unique_pair_values_in_hints_in_line(check_line)
+    assert check_line == result_line
+
+
+
 
 
 
