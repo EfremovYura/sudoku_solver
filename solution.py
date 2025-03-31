@@ -1,7 +1,5 @@
 __version__ = '0.1'
 
-from enum import unique
-from itertools import combinations, groupby
 from utils import show_details
 
 
@@ -30,7 +28,8 @@ class Solution:
         self.write_known_value_from_hints(process_list)
         return board
 
-    def is_solved(self, board: list[list]) -> bool:
+    @staticmethod
+    def is_solved(board: list[list]) -> bool:
         filled_lines = [all(map(lambda x: isinstance(x, str) and x.isdigit(), arr)) for arr in board]
 
         return all(filled_lines)
@@ -51,7 +50,8 @@ class Solution:
                 line[i] = list(map(str, range(1, 10))) if line[i] == '.' else line[i]
         return board
 
-    def _is_hint(self, hint: list | str) -> bool:
+    @staticmethod
+    def _is_hint(hint: list | str) -> bool:
         return isinstance(hint, list)
 
     @show_details
