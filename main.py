@@ -1,20 +1,25 @@
 __version__ = '0.1'
 
+import time
+
 from solution import Solution
 
 
 def main(sudoku_board: list[list]):
     """"""
+    start_time = time.time()
+
 
     solution = Solution()
     solution.solve_sudoku(sudoku_board)
 
-    # solution.solveSudoku(board)
-    print(solution.is_solved(sudoku_board))
-    if solution.is_solved(sudoku_board):
-        print(solution.is_solved_correctly(sudoku_board))
+    print(f'{solution.is_solved(sudoku_board)=}')
+    print(f'{solution.is_solved_correctly(sudoku_board)=}')
     print(*sudoku_board, sep='\n')
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"The task took {elapsed_time:.2f} seconds to complete.")
 
 if __name__ == '__main__':
     board = [["5", "3", ".", ".", "7", ".", ".", ".", "."],
@@ -36,7 +41,7 @@ if __name__ == '__main__':
     #          ["7", "1", ".", ".", "9", ".", ".", ".", "5"],
     #          [".", ".", ".", ".", ".", "3", "8", ".", "."],
     #          ["4", ".", ".", ".", ".", ".", ".", "2", "."]]
-    #
+
     # board = [["9", ".", ".", "7", ".", "6", ".", ".", "."],
     #          [".", "1", ".", "4", "9", ".", ".", "2", "."],
     #          [".", "5", ".", "3", ".", ".", "9", ".", "."],
