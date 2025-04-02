@@ -72,21 +72,24 @@ class Solution:
                 self.remove_except_unique_pair_values_in_hints
             ]
             for func in pipline:
+                print(f'{func.__name__}')
                 updated = func(process_list)
                 if updated:
                     self.check_state(process_list)
+                    break
+            updated = any([func(process_list) for func in pipline])
 
     @staticmethod
-    def is_solved(board: list[list]) -> bool:
-        filled_lines = [all(map(lambda x: isinstance(x, str) and x.isdigit(), arr)) for arr in board]
+    def is_solved(process_list: list[list]) -> bool:
+        filled_lines = [all(map(lambda x: isinstance(x, str) and x.isdigit(), line)) for line in process_list]
 
         return all(filled_lines)
 
-    def is_solved_correctly(self, board: list[list]) -> bool:
-        if self.is_solved_correctly(board):
+    def is_solved_correctly(self, process_list: list[list]) -> bool:
+        if not self.is_solved(process_list):
             return False
 
-        for i, line in enumerate(board):
+        for i, line in enumerate(process_list):
             if set('123456789').difference(set(line)):
                 print(f'wrong line {i}: {line}')
                 return False
@@ -281,17 +284,20 @@ class Solution:
         return process_list
 
     def gues(self, process_list: list[list]) -> None:
+
         for i, line in enumerate(process_list[:9]):
             for j, elem in enumerate(line):
                 if not self._is_hint(elem):
                     continue
                 for n in elem:
-                    process_list_tmp = deepcopy(process_list)
+                    board_tmp = deepcopy(process_list[:9])
                     print(f'gues: {n=} in {elem=} in {i=} {j=} {line=}')
-                    process_list_tmp[i][j] = n
+                    board_tmp[i][j] = n
+                    tmp_solution = Solution()
+                    tmp_solution.process_list = tmp_solution.make_process_list(board_tmp)
 
                     try:
-                        Solution().process_without_gues(process_list_tmp)
+                        tmp_solution.process_without_gues(tmp_solution.process_list)
                         print(f'unknown state')
                     except SudokuFailed:
                         print('failed')
@@ -299,12 +305,6 @@ class Solution:
                         self.process_without_gues(process_list)
                     except SudokuSolved as e:
                         print('solved')
-                        self.process_list = process_list_tmp
+                        self.process_list = tmp_solution.process_list
                         raise e
-                    except SudokuNeedUpdate:
-                        print('needupdate')
-                        self.process_without_gues(process_list)
-                        continue
-                    except SudokuTooLong:
-                        print('toolong')
-                        continue
+
