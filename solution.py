@@ -23,7 +23,7 @@ class Solution:
     def __init__(self):
         self.process_list = []
 
-    def solve_sudoku(self, board: list[list[str]], n_estimators: int = 1000) -> list:
+    def solve_sudoku(self, board: list[list[str]], n_estimators: int = 100000) -> list:
         """
         Modify board in-place.
         """
@@ -34,26 +34,24 @@ class Solution:
         while not self.is_solved(self.process_list):
             i += 1
             if i >= n_estimators:
+                print('TooLong')
                 raise SudokuTooLong(f'{n_estimators=} limit reached')
             print(i)
-            print(self.process_list)
-            try:
-                self.process(self.process_list)
-                self.check_unique_value_in_hints(self.process_list)
-                self.remove_unique_pair_in_hints(self.process_list)
-                self.remove_except_unique_pair_values_in_hints(self.process_list)
-                self.gues_from_2(self.process_list)
 
-            except SudokuSolved:
+            try:
+                self.process_without_gues(self.process_list)
+
+                self.gues(self.process_list)
+
+            except SudokuSolved as e:
                 print('success')
-                print(*self.process_list[:10], sep='\n')
-                break
+                raise e
             except SudokuFailed as e:
                 print(f'failed {e}')
-                print(*self.process_list, sep='\n')
-                break
+                raise e
             except SudokuNeedUpdate:
                 continue
+
         return board
 
     def check_state(self, process_list: list[list]) -> None | Exception:
@@ -63,11 +61,20 @@ class Solution:
         if self.is_solved(process_list) and self.is_solved_correctly(process_list):
             raise SudokuSolved
 
-    def process(self, process_list: list[list]) -> list[list]:
-        self.remove_known_values_from_hints(process_list)
-        self.write_known_value_from_hints(process_list)
-        self.check_state(process_list)
-        return process_list
+    def process_without_gues(self, process_list: list[list]) -> None:
+        updated = True
+        while updated:
+            pipline = [
+                self.remove_known_values_from_hints,
+                self.write_known_value_from_hints,
+                self.check_unique_value_in_hints,
+                self.remove_unique_pair_in_hints,
+                self.remove_except_unique_pair_values_in_hints
+            ]
+            for func in pipline:
+                updated = func(process_list)
+                if updated:
+                    self.check_state(process_list)
 
     @staticmethod
     def is_solved(board: list[list]) -> bool:
@@ -75,8 +82,10 @@ class Solution:
 
         return all(filled_lines)
 
-    @staticmethod
-    def is_solved_correctly(board: list[list]) -> bool:
+    def is_solved_correctly(self, board: list[list]) -> bool:
+        if self.is_solved_correctly(board):
+            return False
+
         for i, line in enumerate(board):
             if set('123456789').difference(set(line)):
                 print(f'wrong line {i}: {line}')
@@ -110,8 +119,8 @@ class Solution:
     def _is_hint(hint: list | str) -> bool:
         return isinstance(hint, list)
 
-    def _remove_known_values_from_line(self, line: list[list | str]) -> list:
-        need_update = False
+    def _remove_known_values_from_line(self, line: list[list | str]) -> bool:
+        updated = False
         for elem in line:
             if not self._is_hint(elem):
                 continue
@@ -121,14 +130,13 @@ class Solution:
             for value in known_values:
                 if value in elem:
                     elem.remove(value)
-                    need_update = True
+                    updated = True
 
-        if need_update:
-            raise SudokuNeedUpdate()
-        return line
+        return updated
 
-    def _write_known_value_from_hints_in_line(self, line: list[list | str]) -> list:
-        need_update = False
+    def _write_known_value_from_hints_in_line(self, line: list[list | str]) -> bool:
+        updated = False
+
         for i, elem in enumerate(line):
 
             if not self._is_hint(elem):
@@ -136,14 +144,11 @@ class Solution:
 
             if len(elem) == 1:
                 line[i] = elem[0]
-                need_update = True
+                updated = True
 
-        if need_update:
-            raise SudokuNeedUpdate()
+        return updated
 
-        return line
-
-    def _check_unique_value_in_hints_in_line(self, line: list[list | str]) -> list:
+    def _check_unique_value_in_hints_in_line(self, line: list[list | str]) -> bool:
         need_update = False
         for i, elem in enumerate(line):
             if not self._is_hint(elem):
@@ -156,11 +161,9 @@ class Solution:
                     line[i] = n
                     need_update = True
 
-        if need_update:
-            raise SudokuNeedUpdate()
-        return line
+        return need_update
 
-    def _remove_unique_pair_in_hints_in_line(self, line: list[list | str]) -> list:
+    def _remove_unique_pair_in_hints_in_line(self, line: list[list | str]) -> bool:
         need_update = False
         pair_hints = [hint for hint in line if self._is_hint(hint) and len(hint) == 2]
 
@@ -183,12 +186,9 @@ class Solution:
                             line_elem.remove(pair_elem)
                             need_update = True
 
-        if need_update:
-            raise SudokuNeedUpdate()
+        return need_update
 
-        return line
-
-    def _remove_except_unique_pair_values_in_hints_in_line(self, line: list[list | str]) -> list:
+    def _remove_except_unique_pair_values_in_hints_in_line(self, line: list[list | str]) -> bool:
         need_update = False
         hints: list[list] = [hint for hint in line if self._is_hint(hint)]
 
@@ -219,34 +219,44 @@ class Solution:
                     hints[i].remove(n)
                     need_update = True
 
-        if need_update:
-            raise SudokuNeedUpdate()
-        return line
+        return need_update
 
-    def remove_known_values_from_hints(self, process_list: list[list]) -> list:
+    def remove_known_values_from_hints(self, process_list: list[list]) -> bool:
+        updated = False
         for line in process_list:
-            self._remove_known_values_from_line(line)
-        return process_list
+            updated_line = self._remove_known_values_from_line(line)
+            updated = updated or updated_line
+        return updated
 
-    def write_known_value_from_hints(self, process_list: list[list]) -> list:
+    def write_known_value_from_hints(self, process_list: list[list]) -> bool:
+        updated = False
         for line in process_list:
-            self._write_known_value_from_hints_in_line(line)
-        return process_list
+            updated_line = self._write_known_value_from_hints_in_line(line)
+            updated = updated or updated_line
+        return updated
 
-    def check_unique_value_in_hints(self, process_list: list[list]) -> list:
+    def check_unique_value_in_hints(self, process_list: list[list]) -> bool:
+        need_update = False
         for line in process_list:
-            self._check_unique_value_in_hints_in_line(line)
-        return process_list
+            need_line_update = self._check_unique_value_in_hints_in_line(line)
+            need_update = need_update or need_line_update
 
-    def remove_unique_pair_in_hints(self, process_list: list[list]) -> list:
-        for line in process_list:
-            self._remove_unique_pair_in_hints_in_line(line)
-        return process_list
+        return need_update
 
-    def remove_except_unique_pair_values_in_hints(self, process_list: list[list]) -> list:
+    def remove_unique_pair_in_hints(self, process_list: list[list]) -> bool:
+        need_update = False
         for line in process_list:
-            self._remove_except_unique_pair_values_in_hints_in_line(line)
-        return process_list
+            need_line_update = self._remove_unique_pair_in_hints_in_line(line)
+            need_update = need_update or need_line_update
+
+        return need_update
+
+    def remove_except_unique_pair_values_in_hints(self, process_list: list[list]) -> bool:
+        need_update = False
+        for line in process_list:
+            need_line_update = self._remove_except_unique_pair_values_in_hints_in_line(line)
+            need_update = need_update or need_line_update
+        return need_update
 
     @staticmethod
     def make_process_list(board: list[list]) -> list:
@@ -270,24 +280,31 @@ class Solution:
                 process_list.append(box_part1 + box_part2 + box_part3)
         return process_list
 
-    def gues_from_2(self, process_list: list[list]) -> list:
-        process_list_tmp = deepcopy(process_list)
-
-        for i, line in enumerate(process_list_tmp):
+    def gues(self, process_list: list[list]) -> None:
+        for i, line in enumerate(process_list[:9]):
             for j, elem in enumerate(line):
-                if len(elem) == 2:
-                    for n in elem:
+                if not self._is_hint(elem):
+                    continue
+                for n in elem:
+                    process_list_tmp = deepcopy(process_list)
+                    print(f'gues: {n=} in {elem=} in {i=} {j=} {line=}')
+                    process_list_tmp[i][j] = n
 
-                        process_list_tmp[i][j] = n
-
-                        try:
-                            Solution().solve_sudoku(process_list_tmp[:10], 100)
-                        except SudokuFailed:
-                            process_list[i][j] = elem[0] if n != elem[0] else elem[1]
-                        except SudokuSolved as e:
-                            self.process_list = process_list_tmp
-                            raise e
-                        except SudokuTooLong:
-                            continue
-
-        return process_list
+                    try:
+                        Solution().process_without_gues(process_list_tmp)
+                        print(f'unknown state')
+                    except SudokuFailed:
+                        print('failed')
+                        process_list[i][j].remove(n)
+                        self.process_without_gues(process_list)
+                    except SudokuSolved as e:
+                        print('solved')
+                        self.process_list = process_list_tmp
+                        raise e
+                    except SudokuNeedUpdate:
+                        print('needupdate')
+                        self.process_without_gues(process_list)
+                        continue
+                    except SudokuTooLong:
+                        print('toolong')
+                        continue
