@@ -4,20 +4,6 @@ from solution import Solution
 solution = Solution()
 
 test_lines = [
-    ([['3', '5', '7', '8', '9'], ['3', '5'], '7', '9', '8', '6', '2', '4', '1'],
-     [['3', '5'], ['3', '5'], '7', '9', '8', '6', '2', '4', '1']),
-    (['9', ['1', '4', '5', '7', '9'], ['1', '5'], '8', '6', '3', ['1', '4', '7'], '2', ['4', '5']],
-     ['9', ['1', '4', '5', '7'], ['1', '5'], '8', '6', '3', ['1', '4', '7'], '2', ['4', '5']])
-]
-
-
-@pytest.mark.parametrize('check_line, result_line', test_lines)
-def test_remove_known_values_from_line(check_line, result_line):
-    solution._remove_known_values_from_line(check_line)
-    assert check_line == result_line
-
-
-test_lines = [
     ([['3'], ['5'], '7', '9', '8', '6', '2', '4', '1'],
      ['3', '5', '7', '9', '8', '6', '2', '4', '1']),
     (['9', ['4', '7'], ['1'], '8', '6', '3', ['1', '4', '7'], '2', ['5']],
@@ -114,4 +100,3 @@ def test_remove_except_unique_pair_values_in_hints_in_line(check_line, result_li
 #          [".", ".", ".", ".", ".", ".", ".", ".", "6"],
 #          [".", ".", ".", "2", "7", "5", "9", ".", "."]]
 
-# def test_solveSudoku()
