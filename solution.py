@@ -15,11 +15,15 @@ class SudokuNeedUpdate(Exception):
     pass
 
 
+class SudokuTooLong(Exception):
+    pass
+
+
 class Solution:
     def __init__(self):
         self.process_list = []
 
-    def solve_sudoku(self, board: list[list[str]]) -> list:
+    def solve_sudoku(self, board: list[list[str]], n_estimators: int = 1000) -> list:
         """
         Modify board in-place.
         """
@@ -29,6 +33,8 @@ class Solution:
         i = 0
         while not self.is_solved(self.process_list):
             i += 1
+            if i >= n_estimators:
+                raise SudokuTooLong(f'{n_estimators=} limit reached')
             print(i)
             print(self.process_list)
             try:
@@ -265,25 +271,23 @@ class Solution:
         return process_list
 
     def gues_from_2(self, process_list: list[list]) -> list:
-        process_list_1 = deepcopy(process_list)
+        process_list_tmp = deepcopy(process_list)
 
-        for i, line in enumerate(process_list_1):
+        for i, line in enumerate(process_list_tmp):
             for j, elem in enumerate(line):
                 if len(elem) == 2:
-                    n1, n2 = elem
-                    process_list_1[i][j] = n1
+                    for n in elem:
 
-                    try:
-                        Solution().solve_sudoku(process_list_1[:10])
-                    except SudokuFailed:
-                        print('SudokuFailed in gues_from_2')
-                        process_list[i][j] = n2
-                    except SudokuSolved:
-                        print('SudokuSolved in gues_from_2')
-                        process_list[i][j] = n1
-                    else:
-                        print('strange: no exception in gues_from_2')
-                    finally:
-                        raise SudokuNeedUpdate
+                        process_list_tmp[i][j] = n
+
+                        try:
+                            Solution().solve_sudoku(process_list_tmp[:10], 100)
+                        except SudokuFailed:
+                            process_list[i][j] = elem[0] if n != elem[0] else elem[1]
+                        except SudokuSolved as e:
+                            self.process_list = process_list_tmp
+                            raise e
+                        except SudokuTooLong:
+                            continue
 
         return process_list
